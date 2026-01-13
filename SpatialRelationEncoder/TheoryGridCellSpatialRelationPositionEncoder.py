@@ -11,9 +11,7 @@ from .data_utils import *
 from ._cal_freq_list import _cal_freq_list
 
 
-class TheoryGridCellSpatialRelationPositionEncoder(
-    GridCellSpatialRelationPositionEncoder
-):
+class TheoryGridCellSpatialRelationPositionEncoder(PositionEncoder):
     """
     Given a list of (deltaX,deltaY), encode them using the position encoding function
     """

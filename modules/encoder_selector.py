@@ -1,12 +1,7 @@
-# SpatialRelationEncoder/ (package)
-#   __init__.py  (empty)
-#   aodha_ffn.py  (defines class AodhaFFNSpatialRelationLocationEncoder)
-
 import importlib
 from typing import Any, Dict, Tuple, Union, Type
 
-# The entries' names are copied from the tutorial.ipynb specification. 
-# TODO: Match each encoder entry to the actual file under SpatialRelationEncoder. 
+# The entries' names are copied from the documentation.
 ENCODER_REGISTRY: Dict[str, Union[type, Tuple[str, str]]] = {
     # name: (module_path, class_name)
     "Space2Vec-grid": ("..SpatialRelationEncoder.GridCellSpatialRelationLocationEncoder", "GridCellSpatialRelationLocationEncoder"),
@@ -24,6 +19,12 @@ ENCODER_REGISTRY: Dict[str, Union[type, Tuple[str, str]]] = {
     "wrap_ffn": ("..SpatialRelationEncoder.AodhaFFNSpatialRelationLocationEncoder", "AodhaFFNSpatialRelationLocationEncoder"),
     "tile_ffn": ("..SpatialRelationEncoder.GridLookupSpatialRelationLocationEncoder", "GridLookupSpatialRelationLocationEncoder"),
     "Siren(SH)": ("..SpatialRelationEncoder.SphericalHarmonicsSpatialRelationLocationEncoder", "SphericalHarmonicsSpatialRelationLocationEncoder"),
+    # These are not in the allowed options in tutorial.ipynb but Nemin says they can be implemented
+    "GridCellNorm": ("..SpatialRelationEncoder.GridCellNormSpatialRelationEncoder", "GridCellNormSpatialRelationEncoder"),
+    "HexagonGridCell": ("..SpatialRelationEncoder.HexagonGridCellSpatialRelationEncoder", "HexagonGridCellSpatialRelationEncoder"),
+    "Naive": ("..SpatialRelationEncoder.NaiveSpatialRelationEncoder", "NaiveSpatialRelationEncoder"),
+    "TheoryDiagGridCellSpatialRelationEncoder": ("..SpatialRelationEncoder.TheoryDiagGridCellSpatialRelationEncoder", "TheoryDiagGridCellSpatialRelationEncoder"),
+    "": ("..SpatialRelationEncoder.", ""),
 }
 
 def _resolve_encoder(name: str) -> type:
