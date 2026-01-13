@@ -13,30 +13,32 @@ def train(epochs,
             batch_count_print_avg_loss,
             dataloader,
             loc_encoder,
-            model,
+            decoder,
             criterion,
             optimizer, 
             device):
     
-    model = model.to(device)
+    decoder = decoder.to(device)
 
     for epoch in range(epochs):
         running_loss = 0.0
         for i, data in enumerate(dataloader, 0):
             img_b, loc_b, y_b = data
 
+            optimizer.zero_grad()
             # assume loc_b have [lat, long]
             img_embedding = img_b
             loc_embedding = forward_with_np_array(batch_data = loc_b, model = loc_encoder)
 
             loc_img_interaction_embedding = torch.mul(loc_embedding, img_embedding)
 
-            optimizer.zero_grad()
-            outputs = torch.nn.Softmax(dim=1)(loc_img_interaction_embedding)
+            logits = decoder(loc_img_interaction_embedding)
             
-            loss = criterion(outputs, y_b)
+            loss = criterion(logits, y_b)
             loss.backward()
+            
             optimizer.step()
+
             running_loss += loss.item()
 
             if i % batch_count_print_avg_loss == batch_count_print_avg_loss - 1:
