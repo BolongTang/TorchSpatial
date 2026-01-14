@@ -24,6 +24,7 @@ def train(epochs,
         running_loss = 0.0
         for i, data in enumerate(dataloader, 0):
             img_b, loc_b, y_b = data
+            img_b, loc_b, y_b = img_b.to(device), loc_b.to(device), y_b.to(device)
 
             optimizer.zero_grad()
             # assume loc_b have [lat, long]

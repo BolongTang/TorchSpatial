@@ -1,0 +1,99 @@
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from torch.optim import Adam
+
+from sklearn.model_selection import train_test_split
+
+from modules.trainer import train, forward_with_np_array
+from modules.encoder_selector import get_loc_encoder
+from modules.model import ThreeLayerMLP
+
+from pathlib import Path
+
+# - setup vars
+device = "cpu"
+num_classes = 500 # birdsnap class count
+img_dim = loc_dim = embed_dim = 784 # Assumed, can change.
+coord_dim = 2
+
+# - define needed objects
+
+loc_encoder = get_loc_encoder(name = "Space2Vec-grid", overrides = {"coord_dim": coord_dim, "spa_embed_dim": loc_dim, "device": device}) # "device": device is needed if you defined device = 'cpu' above and don't have cuda setup to prevent "AssertionError: Torch not compiled with CUDA enabled", because the default is device="cuda"
+decoder = ThreeLayerMLP(input_dim = embed_dim, hidden_dim = 1024, category_count = num_classes).to(device)
+optimizer = Adam(params = list(loc_encoder.ffn.parameters()) + list(decoder.parameters()), lr = 1e-3)
+
+# - load the model
+
+ckpt = torch.load("checkpoints/final.pt", map_location=device)
+
+loc_encoder.load_state_dict(ckpt["loc_encoder"])
+decoder.load_state_dict(ckpt["decoder"])
+
+optimizer.load_state_dict(ckpt["optimizer"])
+start_epoch = ckpt["epoch"] + 1
+
+# - use the model
+
+# - fake dataset: each row = (img_emb[784], latlon[2], class_index)
+N = 2048
+img = torch.randn(N, img_dim) * 10                         # [N,784]
+
+lat = torch.rand(N)*180 - 90 # - 90 to 90
+lon = torch.rand(N)*360 # 0 to 360
+loc = torch.stack([lat, lon], dim=1) 
+
+y = torch.randint(0, num_classes, (N,), dtype=torch.long)
+
+# Structured relationship: class depends on latitude and longitude bands
+num_lat_bands = 10
+num_lon_bands = 10
+lat_band = ((lat + 90) // (180 / num_lat_bands)).long()
+lon_band = (lon // (360 / num_lon_bands)).long()
+y = (lat_band * num_lon_bands + lon_band) % num_classes
+
+data = list(zip(img, loc, y))
+data_loader = DataLoader(data, batch_size=32, shuffle=False)
+
+# - inference
+loc_encoder.eval()
+decoder.eval()
+
+total = 0
+correct_top1 = 0
+correct_top3 = 0
+mrr_sum = 0
+
+with torch.no_grad():
+    for img_b, loc_b, y_b in data_loader:
+        img_b, loc_b, y_b = img_b.to(device), loc_b.to(device), y_b.to(device)
+
+        img_embedding = img_b
+        loc_embedding = forward_with_np_array(batch_data=loc_b, model=loc_encoder)
+
+        loc_img_interaction_embedding = torch.mul(loc_embedding, img_embedding)
+        logits = decoder(loc_img_interaction_embedding)
+
+        # Top-1
+        pred = logits.argmax(dim=1)
+
+        # Top-3 accuracy
+        top3_idx = logits.topk(3, dim=1).indices                    # [B, 3]
+        correct_top3 += (top3_idx == y_b.unsqueeze(1)).any(dim=1).sum().item()
+
+        # MRR (full ranking over all classes)
+        ranking = logits.argsort(dim=1, descending=True)             # [B, C]
+        positions = ranking.argsort(dim=1)                           # [B, C] where positions[b, c] = rank index (0-based)
+        true_pos0 = positions.gather(1, y_b.view(-1, 1)).squeeze(1)  # [B]
+        mrr_sum += (1.0 / (true_pos0.float() + 1.0)).sum().item()
+
+        total += y_b.size(0)
+        correct_top1 += (pred == y_b).sum().item()
+
+top1_acc = 100.0 * correct_top1 / total if total else 0.0
+top3_acc = 100.0 * correct_top3 / total if total else 0.0
+mrr = mrr_sum / total if total else 0.0
+
+print(f"Top-1 Accuracy on {total} test images: {top1_acc:.2f}%")
+print(f"Top-3 Accuracy on {total} test images: {top3_acc:.2f}%")
+print(f"MRR on {total} test images: {mrr:.4f}")
