@@ -1,4 +1,5 @@
 from ._common_imports import *
+from ._cal_freq_list import _cal_freq_list
 
 from .RBFSpatialRelationPositionEncoder import RBFSpatialRelationPositionEncoder
 

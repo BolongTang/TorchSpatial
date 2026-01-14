@@ -1,3 +1,5 @@
+# Run this under the directory that contains TorchSpatial, not under TorchSpatial itself
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -5,9 +7,9 @@ from torch.optim import Adam
 
 from sklearn.model_selection import train_test_split
 
-from modules.trainer import train, forward_with_np_array
-from modules.encoder_selector import get_loc_encoder
-from modules.model import ThreeLayerMLP
+from TorchSpatial.modules.trainer import train, forward_with_np_array
+from TorchSpatial.modules.encoder_selector import get_loc_encoder
+from TorchSpatial.modules.model import ThreeLayerMLP
 
 from pathlib import Path
 
@@ -61,7 +63,7 @@ def main():
     # - Optimizer
     optimizer = Adam(params = list(loc_encoder.ffn.parameters()) + list(decoder.parameters()), lr = 1e-3)
     # - train() 
-    epochs = 50
+    epochs = 15
     train(epochs = epochs, 
             batch_count_print_avg_loss = 30,
             loc_encoder = loc_encoder,
@@ -115,7 +117,8 @@ def main():
     print(f"MRR on {total} test images: {mrr:.4f}")
 
     # - save model
-    path = Path("checkpoints/final.pt")
+    model_name = "final.pt"
+    path = Path(f"checkpoints/{model_name}")
     path.parent.mkdir(parents=True, exist_ok=True)
 
     torch.save({
@@ -124,6 +127,8 @@ def main():
         "decoder": decoder.state_dict(),
         "optimizer": optimizer.state_dict(),
     }, path)
+
+    print(f"Model saved as checkpoints/{model_name}")
 
 
 if __name__ == "__main__":

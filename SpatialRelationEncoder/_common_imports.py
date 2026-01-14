@@ -8,4 +8,3 @@ import math
 
 from ..modules.module import *
 from ..utils.data_utils import *
-from ._cal_freq_list import _cal_freq_list
