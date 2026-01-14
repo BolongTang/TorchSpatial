@@ -1,5 +1,6 @@
 from ._common_imports import *
 from ._cal_freq_list import _cal_freq_list
+from ..utils.spherical_harmonics_ylm_numpy import get_positional_encoding
 
 class SphericalHarmonicsSpatialRelationPositionEncoder(PositionEncoder):
     """

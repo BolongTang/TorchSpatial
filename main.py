@@ -12,6 +12,7 @@ from TorchSpatial.modules.encoder_selector import get_loc_encoder
 from TorchSpatial.modules.model import ThreeLayerMLP
 
 from pathlib import Path
+import numpy as np
 
 # Using birdsnap
 def main():
@@ -49,10 +50,14 @@ def main():
     test_loader  = DataLoader(test_data, batch_size=32, shuffle=False)
 
     # - location encoder
-    # Allowed: Space2Vec-grid, Space2Vec-theory, xyz, NeRF, Sphere2Vec-sphereC, Sphere2Vec-sphereC+, Sphere2Vec-sphereM, Sphere2Vec-sphereM+, Sphere2Vec-dfs, rbf, rff, wrap, wrap_ffn, tile_ffn
+    # Allowed: Space2Vec-grid, Space2Vec-theory, xyz, NeRF, Sphere2Vec-sphereC, Sphere2Vec-sphereC+, Sphere2Vec-sphereM, Sphere2Vec-sphereM+, Sphere2Vec-dfs, rbf, rff, wrap, wrap_ffn, tile_ffn, Siren(SH)
     # overrides is a dictionary that allows overriding specific params. 
     # ex. loc_encoder = get_loc_encoder(name = "Space2Vec-grid", overrides = {"max_radius":7800, "min_radius":15, "spa_embed_dim":784})
-    loc_encoder = get_loc_encoder(name = "Space2Vec-grid", overrides = {"coord_dim": coord_dim, "spa_embed_dim": loc_dim, "device": device}) # "device": device is needed if you defined device = 'cpu' above and don't have cuda setup to prevent "AssertionError: Torch not compiled with CUDA enabled", because the default is device="cuda"
+    # For other required arguments, please refer to the docs (ex. rbf)
+    # https://torchspatial.readthedocs.io/en/latest/2D%20Location%20Encoders/rbf.html
+    loc_encoder_name = "Siren(SH)"
+    loc_encoder = get_loc_encoder(name = loc_encoder_name, overrides = {"spa_embed_dim":784, "device": device}) # "device": device is needed if you defined device = 'cpu' above and don't have cuda setup to prevent "AssertionError: Torch not compiled with CUDA enabled", because the default is device="cuda"
+    
 
     # - model
     # decoder = ThreeLayerMLP(input_dim = 784, hidden_dim = 1024, category_count = 512)
@@ -117,8 +122,8 @@ def main():
     print(f"MRR on {total} test images: {mrr:.4f}")
 
     # - save model
-    model_name = "final.pt"
-    path = Path(f"checkpoints/{model_name}")
+    model_name = f"{loc_encoder_name}.pt"
+    path = Path(f"TorchSpatial/checkpoints/{model_name}")
     path.parent.mkdir(parents=True, exist_ok=True)
 
     torch.save({
@@ -128,7 +133,7 @@ def main():
         "optimizer": optimizer.state_dict(),
     }, path)
 
-    print(f"Model saved as checkpoints/{model_name}")
+    print(f"Model saved as TorchSpatial/checkpoints/{model_name}")
 
 
 if __name__ == "__main__":

@@ -15,11 +15,12 @@ ENCODER_REGISTRY: Dict[str, Union[type, Tuple[str, str]]] = {
     "Sphere2Vec-dfs": ("..SpatialRelationEncoder.DFTSpatialRelationLocationEncoder", "DFTSpatialRelationLocationEncoder"),
     "rbf": ("..SpatialRelationEncoder.RBFSpatialRelationLocationEncoder", "RBFSpatialRelationLocationEncoder"),
     "rff": ("..SpatialRelationEncoder.RFFSpatialRelationLocationEncoder", "RFFSpatialRelationLocationEncoder"),
-    "wrap": ("..SpatialRelationEncoder.FCNet", "FCNet"),
+    "wrap": ("..modules.models", "FCNet"),
     "wrap_ffn": ("..SpatialRelationEncoder.AodhaFFNSpatialRelationLocationEncoder", "AodhaFFNSpatialRelationLocationEncoder"),
     "tile_ffn": ("..SpatialRelationEncoder.GridLookupSpatialRelationLocationEncoder", "GridLookupSpatialRelationLocationEncoder"),
     "Siren(SH)": ("..SpatialRelationEncoder.SphericalHarmonicsSpatialRelationLocationEncoder", "SphericalHarmonicsSpatialRelationLocationEncoder"),
-    # These are not in the allowed options in tutorial.ipynb but Nemin says they can be implemented
+    # These below are not in the allowed options in tutorial.ipynb but Nemin says they can be implemented
+    # Not supported by the current training implementation
     "GridCellNorm": ("..SpatialRelationEncoder.GridCellNormSpatialRelationEncoder", "GridCellNormSpatialRelationEncoder"),
     "HexagonGridCell": ("..SpatialRelationEncoder.HexagonGridCellSpatialRelationEncoder", "HexagonGridCellSpatialRelationEncoder"),
     "Naive": ("..SpatialRelationEncoder.NaiveSpatialRelationEncoder", "NaiveSpatialRelationEncoder"),

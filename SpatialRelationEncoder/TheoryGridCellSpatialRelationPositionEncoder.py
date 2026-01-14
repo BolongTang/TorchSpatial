@@ -23,12 +23,14 @@ class TheoryGridCellSpatialRelationPositionEncoder(PositionEncoder):
         """
         super().__init__(
             coord_dim=coord_dim,
-            frequency_num=frequency_num,
-            max_radius=max_radius,
-            min_radius=min_radius,
-            freq_init=freq_init,
             device=device,
         )
+
+        self.frequency_num=frequency_num
+        self.max_radius=max_radius
+        self.min_radius=min_radius
+        self.freq_init=freq_init
+
         # the frequence we use for each block, alpha in ICLR paper
         self.cal_freq_list()
         self.cal_freq_mat()
@@ -41,6 +43,11 @@ class TheoryGridCellSpatialRelationPositionEncoder(PositionEncoder):
             [-1.0 / 2.0, -math.sqrt(3) / 2.0])  # 240 degree
 
         self.pos_enc_output_dim = self.cal_pos_enc_output_dim()
+
+    def cal_freq_list(self):
+        self.freq_list = _cal_freq_list(
+            self.freq_init, self.frequency_num, self.max_radius, self.min_radius
+        )
 
     def cal_freq_mat(self):
         # freq_mat shape: (frequency_num, 1)
