@@ -9,7 +9,8 @@ def forward_with_np_array(batch_data, model):
     loc_embedding = torch.squeeze(model(coords = loc_b))
     return loc_embedding
 
-def train(epochs, 
+def train(task,
+            epochs, 
             batch_count_print_avg_loss,
             dataloader,
             loc_encoder,
@@ -29,18 +30,23 @@ def train(epochs,
             optimizer.zero_grad()
             # assume loc_b have [lat, long]
             img_embedding = img_b
-            loc_embedding = forward_with_np_array(batch_data = loc_b, model = loc_encoder)
+            loc_embedding = forward_with_np_array(batch_data = loc_b, model = loc_encoder).float()
+            if task == "Classification":
+                loc_img_interaction_embedding = torch.mul(loc_embedding, img_embedding)
+                logits = decoder(loc_img_interaction_embedding)
+        
+                loss = criterion(logits, y_b)
 
-            loc_img_interaction_embedding = torch.mul(loc_embedding, img_embedding)
-
-            logits = decoder(loc_img_interaction_embedding)
+            elif task == "Regression":
+                loc_img_concat_embedding = torch.cat((loc_embedding, img_embedding), dim = 1)
+                yhat = decoder(loc_img_concat_embedding)
+                loss = criterion(yhat, y_b)
             
-            loss = criterion(logits, y_b)
+            running_loss += loss.item()
+
             loss.backward()
             
             optimizer.step()
-
-            running_loss += loss.item()
 
             if i % batch_count_print_avg_loss == batch_count_print_avg_loss - 1:
                 print('[epoch %d, batch %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / batch_count_print_avg_loss))
